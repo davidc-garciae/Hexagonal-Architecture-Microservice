@@ -1,0 +1,93 @@
+graph TB
+  %% Clients
+  subgraph "Clients"
+    BROWSER["Browser / Mobile Apps"]
+  end
+
+  %% API Gateway
+  subgraph "API Gateway"
+    GATEWAY["Spring Cloud Gateway"]
+  end
+
+  %% Microservices
+  subgraph "Microservices (Hexagonal)"
+    USERS["users-service"]
+    RESTAURANTS["restaurants-service"]
+    ORDERS["orders-service"]
+    TRACE["traceability-service"]
+    MSG["messaging-service"]
+  end
+
+  %% Databases
+  subgraph "Databases (PostgreSQL)"
+    DB_USERS["users_db"]
+    DB_REST["restaurants_db"]
+    DB_ORD["orders_db"]
+    DB_TRACE["traceability_db"]
+    DB_MSG["messaging_db"]
+  end
+
+  %% Messaging
+  subgraph "Messaging (RabbitMQ)"
+    EXCHANGE["Topic Exchange\npowerup.orders"]
+    Q_TRACING_CREATED["Queue\ntracing.order.created"]
+    Q_TRACING_STATUS["Queue\ntracing.order.status.changed"]
+    Q_MSG_CREATED["Queue\nmessaging.order.created"]
+    Q_MSG_STATUS["Queue\nmessaging.order.status.changed"]
+  end
+
+  %% External
+  subgraph "External Services"
+    TWILIO["Twilio SMS API"]
+  end
+
+  %% Client → Gateway
+  BROWSER --> GATEWAY
+
+  %% Gateway → Services
+  GATEWAY --> USERS
+  GATEWAY --> RESTAURANTS
+  GATEWAY --> ORDERS
+  GATEWAY --> TRACE
+  GATEWAY --> MSG
+
+  %% Services → Databases
+  USERS --> DB_USERS
+  RESTAURANTS --> DB_REST
+  ORDERS --> DB_ORD
+  TRACE --> DB_TRACE
+  MSG --> DB_MSG
+
+  %% Orders publishes events
+  ORDERS -- "publish: orders.created" --> EXCHANGE
+  ORDERS -- "publish: orders.status.changed" --> EXCHANGE
+
+  %% Exchange routes to queues
+  EXCHANGE -->|"orders.created"| Q_TRACING_CREATED
+  EXCHANGE -->|"orders.status.changed"| Q_TRACING_STATUS
+  EXCHANGE -->|"orders.created"| Q_MSG_CREATED
+  EXCHANGE -->|"orders.status.changed"| Q_MSG_STATUS
+
+  %% Queues consumed by services
+  Q_TRACING_CREATED --> TRACE
+  Q_TRACING_STATUS --> TRACE
+  Q_MSG_CREATED --> MSG
+  Q_MSG_STATUS --> MSG
+
+  %% Messaging to external provider
+  MSG --> TWILIO
+
+  %% Styles (high contrast)
+  classDef microservice fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000000
+  classDef database fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#000000
+  classDef gateway fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000000
+  classDef messaging fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000000
+  classDef client fill:#ede7f6,stroke:#5e35b1,stroke-width:2px,color:#000000
+  classDef external fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000000
+
+  class USERS,RESTAURANTS,ORDERS,TRACE,MSG microservice
+  class DB_USERS,DB_REST,DB_ORD,DB_TRACE,DB_MSG database
+  class GATEWAY gateway
+  class EXCHANGE,Q_TRACING_CREATED,Q_TRACING_STATUS,Q_MSG_CREATED,Q_MSG_STATUS messaging
+  class BROWSER client
+  class TWILIO external

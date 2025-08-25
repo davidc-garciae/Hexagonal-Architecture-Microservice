@@ -1,0 +1,116 @@
+openapi: 3.0.3
+info:
+  title: orders-service API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8083
+    description: orders-service
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/pedidos:
+    post:
+      tags: [Orders]
+      summary: Create order (CUSTOMER)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PedidoCreateRequest'
+      responses:
+        '201': { description: Created }
+    get:
+      tags: [Orders]
+      summary: List orders by status and restaurant (EMPLOYEE/OWNER)
+      parameters:
+        - in: query
+          name: estado
+          schema: { type: string, enum: [PENDIENTE, EN_PREPARACION, LISTO, ENTREGADO, CANCELADO] }
+        - in: query
+          name: restauranteId
+          schema: { type: integer, format: int64 }
+        - in: query
+          name: page
+          schema: { type: integer, default: 0 }
+        - in: query
+          name: size
+          schema: { type: integer, default: 10 }
+      responses:
+        '200': { description: OK }
+  /api/v1/pedidos/{id}/asignar:
+    put:
+      tags: [Orders]
+      summary: Assign yourself to order (EMPLOYEE)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '200': { description: OK }
+  /api/v1/pedidos/{id}/listo:
+    put:
+      tags: [Orders]
+      summary: Mark order as LISTO (generates PIN)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '200': { description: OK }
+  /api/v1/pedidos/{id}/entregar:
+    put:
+      tags: [Orders]
+      summary: Deliver order (validates PIN)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pin: { type: string, minLength: 4, maxLength: 6 }
+      responses:
+        '200': { description: OK }
+  /api/v1/pedidos/{id}/cancelar:
+    put:
+      tags: [Orders]
+      summary: Cancel order (only PENDIENTE)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '200': { description: OK }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    PedidoCreateRequest:
+      type: object
+      required: [clienteId, restauranteId, platos]
+      properties:
+        clienteId: { type: integer, format: int64 }
+        restauranteId: { type: integer, format: int64 }
+        platos:
+          type: array
+          items:
+            type: object
+            required: [platoId, cantidad]
+            properties:
+              platoId: { type: integer, format: int64 }
+              cantidad: { type: integer, minimum: 1 }
+
+

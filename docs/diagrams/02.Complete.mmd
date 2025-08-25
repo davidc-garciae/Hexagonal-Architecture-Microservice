@@ -1,0 +1,128 @@
+graph TB
+    %% Clients
+    subgraph "Clients"
+        WEB["🌐 Web App"]
+        MOBILE["📱 Mobile App"]
+        ADMIN["👨‍💼 Admin Panel"]
+    end
+
+    %% API Gateway
+    subgraph "API Gateway"
+        GATEWAY["🚪 Spring Cloud Gateway\n- Routing\n- Load Balancing\n- Rate Limiting\n- JWT Validation"]
+    end
+
+    %% Microservices (Hexagonal)
+    subgraph "Microservices (Hexagonal)"
+        subgraph "👥 Users Service"
+            USERS_API["REST API"]
+            USERS_DOMAIN["Domain\n- Users\n- Roles & Permissions"]
+            USERS_DB[("💾 users_db\nPostgreSQL")]
+        end
+
+        subgraph "🏪 Restaurants Service"
+            REST_API["REST API"]
+            REST_DOMAIN["Domain\n- Restaurants\n- Dishes"]
+            REST_DB[("💾 restaurants_db\nPostgreSQL")]
+        end
+
+        subgraph "📋 Orders Service"
+            ORDERS_API["REST API"]
+            ORDERS_DOMAIN["Domain\n- Order Lifecycle\n- PIN generation"]
+            ORDERS_DB[("💾 orders_db\nPostgreSQL")]
+        end
+
+        subgraph "📊 Traceability Service"
+            TRACE_API["REST API"]
+            TRACE_DOMAIN["Domain\n- Audit Logs\n- Metrics"]
+            TRACE_DB[("💾 traceability_db\nPostgreSQL")]
+        end
+
+        subgraph "📧 Messaging Service"
+            MSG_API["REST API"]
+            MSG_DOMAIN["Domain\n- Notifications\n- Templates"]
+            MSG_DB[("💾 messaging_db\nPostgreSQL")]
+        end
+    end
+
+    %% Infrastructure Services
+    subgraph "Infrastructure Services"
+        EUREKA["🔍 Service Discovery\nNetflix Eureka"]
+        CONFIG["⚙️ Config Server\nSpring Cloud Config"]
+        AUTH["🔐 Auth Server\nSpring Security + JWT"]
+        TWILIO["📞 Twilio API\nExternal Service"]
+    end
+
+    %% Asynchronous Messaging
+    subgraph "Messaging (RabbitMQ)"
+        EXCHANGE["🐰 Topic Exchange\npowerup.orders"]
+        Q_TRACING_CREATED["📬 tracing.order.created"]
+        Q_TRACING_STATUS["📬 tracing.order.status.changed"]
+        Q_MSG_CREATED["📬 messaging.order.created"]
+        Q_MSG_STATUS["📬 messaging.order.status.changed"]
+    end
+
+    %% Main connections
+    WEB --> GATEWAY
+    MOBILE --> GATEWAY
+    ADMIN --> GATEWAY
+
+    GATEWAY --> USERS_API
+    GATEWAY --> REST_API
+    GATEWAY --> ORDERS_API
+    GATEWAY --> TRACE_API
+    GATEWAY --> MSG_API
+
+    %% Databases
+    USERS_DOMAIN --> USERS_DB
+    REST_DOMAIN --> REST_DB
+    ORDERS_DOMAIN --> ORDERS_DB
+    TRACE_DOMAIN --> TRACE_DB
+    MSG_DOMAIN --> MSG_DB
+
+    %% Orders publishes events
+    ORDERS_DOMAIN -- "publish: orders.created" --> EXCHANGE
+    ORDERS_DOMAIN -- "publish: orders.status.changed" --> EXCHANGE
+
+    %% Exchange routes
+    EXCHANGE -->|"orders.created"| Q_TRACING_CREATED
+    EXCHANGE -->|"orders.status.changed"| Q_TRACING_STATUS
+    EXCHANGE -->|"orders.created"| Q_MSG_CREATED
+    EXCHANGE -->|"orders.status.changed"| Q_MSG_STATUS
+
+    %% Queues consumed by services
+    Q_TRACING_CREATED --> TRACE_DOMAIN
+    Q_TRACING_STATUS --> TRACE_DOMAIN
+    Q_MSG_CREATED --> MSG_DOMAIN
+    Q_MSG_STATUS --> MSG_DOMAIN
+
+    %% External provider
+    MSG_DOMAIN --> TWILIO
+
+    %% Service Discovery & Config
+    USERS_API -.-> EUREKA
+    REST_API -.-> EUREKA
+    ORDERS_API -.-> EUREKA
+    TRACE_API -.-> EUREKA
+    MSG_API -.-> EUREKA
+    GATEWAY -.-> EUREKA
+
+    USERS_API -.-> CONFIG
+    REST_API -.-> CONFIG
+    ORDERS_API -.-> CONFIG
+    TRACE_API -.-> CONFIG
+    MSG_API -.-> CONFIG
+
+    %% Styles (high contrast)
+    classDef microservice fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000000
+    classDef database fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#000000
+    classDef infrastructure fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000000
+    classDef messaging fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000000
+    classDef client fill:#ede7f6,stroke:#5e35b1,stroke-width:2px,color:#000000
+    classDef external fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000000
+
+    class USERS_API,USERS_DOMAIN,REST_API,REST_DOMAIN,ORDERS_API,ORDERS_DOMAIN,TRACE_API,TRACE_DOMAIN,MSG_API,MSG_DOMAIN microservice
+    class USERS_DB,REST_DB,ORDERS_DB,TRACE_DB,MSG_DB database
+    class GATEWAY,EUREKA,CONFIG,AUTH infrastructure
+    class EXCHANGE,Q_TRACING_CREATED,Q_TRACING_STATUS,Q_MSG_CREATED,Q_MSG_STATUS messaging
+    class WEB,MOBILE,ADMIN client
+    class TWILIO external

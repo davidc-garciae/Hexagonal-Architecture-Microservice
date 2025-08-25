@@ -1,0 +1,132 @@
+graph TB
+    %% Entrada - Message Consumers
+    subgraph "Adaptadores de Entrada (Message Consumers)"
+        RABBIT_CONSUMER["🐰 RabbitMQ Consumer<br/>@RabbitListener<br/>- pedido.creado<br/>- usuario.registrado<br/>- promocion.nueva"]
+        REST_API["🌐 REST API<br/>@RestController<br/>- Envío manual<br/>- Consulta estado"]
+    end
+    
+    %% Capa de Aplicación
+    subgraph "Capa de Aplicación"
+        MSG_HANDLER["📋 Message Handler<br/>@Service<br/>- Procesar eventos<br/>- Validar datos"]
+        
+        subgraph "DTOs"
+            EVENT_DTO["📤 Event DTO<br/>- PedidoCreadoEvent<br/>- UsuarioRegistradoEvent"]
+            SMS_DTO["📥 SMS Request DTO<br/>- Teléfono<br/>- Mensaje<br/>- Tipo"]
+            RESPONSE_DTO["📊 Response DTO<br/>- Estado envío<br/>- ID mensaje<br/>- Timestamp"]
+        end
+        
+        subgraph "Mappers"
+            EVENT_MAPPER["🔄 Event Mapper<br/>@Mapper<br/>- Event → Domain"]
+            SMS_MAPPER["🔄 SMS Mapper<br/>@Mapper<br/>- DTO ↔ Domain"]
+        end
+    end
+    
+    %% Núcleo de Dominio
+    subgraph "Núcleo de Dominio (Hexágono)"
+        subgraph "Modelos de Dominio"
+            NOTIFICATION["📨 Notification<br/>- id<br/>- destinatario<br/>- mensaje<br/>- estado<br/>- timestamp"]
+            TEMPLATE["📄 MessageTemplate<br/>- id<br/>- tipo<br/>- plantilla<br/>- variables"]
+            SMS_RESULT["📊 SMSResult<br/>- messageId<br/>- status<br/>- errorCode"]
+        end
+        
+        subgraph "Casos de Uso"
+            SEND_SMS_UC["📱 SendSMSUseCase<br/>- Validar teléfono<br/>- Aplicar template<br/>- Enviar SMS"]
+            TEMPLATE_UC["📝 TemplateUseCase<br/>- Gestionar plantillas<br/>- Reemplazar variables"]
+            HISTORY_UC["📊 HistoryUseCase<br/>- Consultar historial<br/>- Generar reportes"]
+        end
+        
+        subgraph "Puertos (Interfaces)"
+            SMS_PORT["🔌 SMS Service Port<br/>INotificationServicePort<br/>(Puerto de Entrada)"]
+            PERSISTENCE_PORT["🔌 Persistence Port<br/>INotificationPersistencePort<br/>(Puerto de Salida)"]
+            SMS_PROVIDER_PORT["🔌 SMS Provider Port<br/>ISMSProviderPort<br/>(Puerto de Salida)"]
+            USER_PORT["🔌 User Service Port<br/>IUserServicePort<br/>(Puerto de Salida)"]
+        end
+    end
+    
+    %% Adaptadores de Salida
+    subgraph "Adaptadores de Salida"
+        subgraph "Adaptador Twilio"
+            TWILIO_ADAPTER["📞 Twilio Adapter<br/>@Component<br/>- TwilioClient<br/>- Configuración API"]
+            TWILIO_CONFIG["⚙️ Twilio Config<br/>- Account SID<br/>- Auth Token<br/>- From Number"]
+        end
+        
+        subgraph "Adaptador de Persistencia"
+            JPA_ADAPTER["💾 JPA Adapter<br/>- NotificationJpaAdapter<br/>- TemplateJpaAdapter"]
+            
+            subgraph "Entidades JPA"
+                NOTIFICATION_ENTITY["🗃️ NotificationEntity<br/>@Entity<br/>- Logs de envío"]
+                TEMPLATE_ENTITY["🗃️ TemplateEntity<br/>@Entity<br/>- Plantillas de mensaje"]
+            end
+            
+            subgraph "Repositorios"
+                NOTIFICATION_REPO["🏪 NotificationRepository<br/>JpaRepository"]
+                TEMPLATE_REPO["🏪 TemplateRepository<br/>JpaRepository"]
+            end
+        end
+        
+        subgraph "Cliente de Microservicio"
+            USER_CLIENT["👥 User Service Client<br/>@FeignClient<br/>- Obtener datos usuario<br/>- Verificar teléfono"]
+        end
+        
+        DB[("🗄️ Base de Datos<br/>Mensajería<br/>MySQL")]
+        TWILIO_API["☁️ Twilio API<br/>Servicio Externo"]
+    end
+    
+    %% Configuración y Seguridad
+    subgraph "Configuración"
+        BEAN_CONFIG["⚙️ Bean Configuration<br/>@Configuration<br/>- Inyección dependencias"]
+        SECURITY_CONFIG["🔐 Security Config<br/>- JWT Validation<br/>- CORS Settings"]
+        RABBIT_CONFIG["🐰 RabbitMQ Config<br/>- Queues<br/>- Exchanges<br/>- Bindings"]
+    end
+    
+    %% Flujos principales
+    RABBIT_CONSUMER --> MSG_HANDLER
+    REST_API --> MSG_HANDLER
+    MSG_HANDLER --> EVENT_MAPPER
+    EVENT_MAPPER --> SMS_PORT
+    
+    SMS_PORT --> SEND_SMS_UC
+    SEND_SMS_UC --> TEMPLATE_UC
+    TEMPLATE_UC --> PERSISTENCE_PORT
+    PERSISTENCE_PORT --> JPA_ADAPTER
+    
+    SEND_SMS_UC --> USER_PORT
+    USER_PORT --> USER_CLIENT
+    
+    SEND_SMS_UC --> SMS_PROVIDER_PORT
+    SMS_PROVIDER_PORT --> TWILIO_ADAPTER
+    TWILIO_ADAPTER --> TWILIO_API
+    
+    %% Persistencia
+    JPA_ADAPTER --> NOTIFICATION_ENTITY
+    JPA_ADAPTER --> TEMPLATE_ENTITY
+    NOTIFICATION_ENTITY --> NOTIFICATION_REPO
+    TEMPLATE_ENTITY --> TEMPLATE_REPO
+    NOTIFICATION_REPO --> DB
+    TEMPLATE_REPO --> DB
+    
+    %% Configuración
+    BEAN_CONFIG -.-> SEND_SMS_UC
+    BEAN_CONFIG -.-> TWILIO_ADAPTER
+    TWILIO_CONFIG -.-> TWILIO_ADAPTER
+    RABBIT_CONFIG -.-> RABBIT_CONSUMER
+    
+    %% Flujo de respuesta
+    TWILIO_API --> |"SMS Result"| TWILIO_ADAPTER
+    TWILIO_ADAPTER --> |"SMSResult"| SEND_SMS_UC
+    SEND_SMS_UC --> |"Notification"| PERSISTENCE_PORT
+    PERSISTENCE_PORT --> |"Log Result"| MSG_HANDLER
+    MSG_HANDLER --> |"Response"| SMS_MAPPER
+    
+    %% Estilos
+    classDef domainCore fill:#e1f5fe,stroke:#0277bd,stroke-width:3px,color:#000000
+    classDef application fill:#f3e5f5,stroke:#7b1fa2,stroke-width:3px,color:#000000
+    classDef infrastructure fill:#e8f5e8,stroke:#388e3c,stroke-width:3px,color:#000000
+    classDef external fill:#fce4ec,stroke:#c2185b,stroke-width:3px,color:#000000
+    classDef configuration fill:#fff3e0,stroke:#f57c00,stroke-width:3px,color:#000000
+    
+    class NOTIFICATION,TEMPLATE,SMS_RESULT,SEND_SMS_UC,TEMPLATE_UC,HISTORY_UC,SMS_PORT,PERSISTENCE_PORT,SMS_PROVIDER_PORT,USER_PORT domainCore
+    class MSG_HANDLER,EVENT_DTO,SMS_DTO,RESPONSE_DTO,EVENT_MAPPER,SMS_MAPPER application
+    class RABBIT_CONSUMER,REST_API,TWILIO_ADAPTER,JPA_ADAPTER,NOTIFICATION_ENTITY,TEMPLATE_ENTITY,NOTIFICATION_REPO,TEMPLATE_REPO,USER_CLIENT,DB infrastructure
+    class TWILIO_API external
+    class BEAN_CONFIG,SECURITY_CONFIG,RABBIT_CONFIG,TWILIO_CONFIG configuration

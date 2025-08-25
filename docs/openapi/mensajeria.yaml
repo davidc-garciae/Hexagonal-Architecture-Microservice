@@ -1,0 +1,37 @@
+openapi: 3.0.3
+info:
+  title: mensajeria-service API
+  version: 1.0.0
+  description: API de notificaciones (SMS)
+servers:
+  - url: http://localhost:8085
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/notificaciones/test-sms:
+    post:
+      tags: [Notificaciones]
+      summary: Enviar SMS de prueba (ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SMSRequest'
+      responses:
+        '200': { description: OK }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    SMSRequest:
+      type: object
+      required: [telefono, mensaje]
+      properties:
+        telefono: { type: string, maxLength: 13 }
+        mensaje: { type: string, maxLength: 160 }
+
+

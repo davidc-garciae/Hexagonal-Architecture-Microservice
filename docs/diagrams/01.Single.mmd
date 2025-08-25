@@ -1,0 +1,71 @@
+graph TB
+    %% Adaptadores de Entrada (Lado Izquierdo - Driving Adapters)
+    subgraph "Adaptadores de Entrada<br/>(Driving Adapters)"
+        REST["🌐 REST Controller<br/>ObjectRestController<br/>@RestController"]
+    end
+    
+    %% Capa de Aplicación
+    subgraph "Capa de Aplicación<br/>(Application Layer)"
+        HANDLER["📋 Application Handler<br/>ObjectHandler<br/>@Service"]
+        REQ_DTO["📤 Request DTO<br/>ObjectRequestDto"]
+        RES_DTO["📥 Response DTO<br/>ObjectResponseDto"]
+        REQ_MAP["🔄 Request Mapper<br/>IObjectRequestMapper<br/>@Mapper"]
+        RES_MAP["🔄 Response Mapper<br/>IObjectResponseMapper<br/>@Mapper"]
+    end
+    
+    %% Núcleo de Dominio (Hexágono Central)
+    subgraph "Núcleo de Dominio<br/>(Domain Core - Hexagon)"
+        MODEL["📊 Domain Model<br/>ObjectModel"]
+        USECASE["⚙️ Use Case<br/>ObjectUseCase"]
+        API_PORT["🔌 API Port<br/>IObjectServicePort<br/>(Entrada)"]
+        SPI_PORT["🔌 SPI Port<br/>IObjectPersistencePort<br/>(Salida)"]
+    end
+    
+    %% Adaptadores de Salida (Lado Derecho - Driven Adapters)
+    subgraph "Adaptadores de Salida<br/>(Driven Adapters)"
+        JPA_ADAPTER["💾 JPA Adapter<br/>ObjectJpaAdapter"]
+        ENTITY["🗃️ JPA Entity<br/>ObjectEntity<br/>@Entity"]
+        REPO["🏪 Repository<br/>IObjectRepository<br/>JpaRepository"]
+        DB[("🗄️ Base de Datos<br/>MySQL")]
+        ENTITY_MAP["🔄 Entity Mapper<br/>IObjectEntityMapper<br/>@Mapper"]
+    end
+    
+    %% Flujo de Entrada
+    REST --> |"HTTP Request"| HANDLER
+    HANDLER --> |"ObjectRequestDto"| REQ_MAP
+    REQ_MAP --> |"ObjectModel"| API_PORT
+    API_PORT --> |"Business Logic"| USECASE
+    
+    %% Flujo de Salida
+    USECASE --> |"ObjectModel"| SPI_PORT
+    SPI_PORT --> |"Persistence"| JPA_ADAPTER
+    JPA_ADAPTER --> |"ObjectEntity"| ENTITY_MAP
+    ENTITY_MAP --> |"Save/Find"| REPO
+    REPO --> |"SQL"| DB
+    
+    %% Flujo de Respuesta
+    REPO --> |"ObjectEntity"| ENTITY_MAP
+    ENTITY_MAP --> |"ObjectModel"| JPA_ADAPTER
+    JPA_ADAPTER --> |"ObjectModel"| USECASE
+    USECASE --> |"ObjectModel"| HANDLER
+    HANDLER --> |"ObjectResponseDto"| RES_MAP
+    RES_MAP --> |"HTTP Response"| REST
+    
+    %% Configuración
+    subgraph "Configuración<br/>(Configuration)"
+        BEAN_CONFIG["⚙️ Bean Configuration<br/>BeanConfiguration<br/>@Configuration"]
+    end
+    
+    BEAN_CONFIG -.-> |"@Bean"| USECASE
+    BEAN_CONFIG -.-> |"@Bean"| JPA_ADAPTER
+    
+    %% Estilos
+    classDef domainCore fill:#e1f5fe,stroke:#0277bd,stroke-width:3px,color:#000000
+    classDef application fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000000
+    classDef infrastructure fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#000000
+    classDef configuration fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000000
+    
+    class MODEL,USECASE,API_PORT,SPI_PORT domainCore
+    class HANDLER,REQ_DTO,RES_DTO,REQ_MAP,RES_MAP application
+    class REST,JPA_ADAPTER,ENTITY,REPO,DB,ENTITY_MAP infrastructure
+    class BEAN_CONFIG configuration

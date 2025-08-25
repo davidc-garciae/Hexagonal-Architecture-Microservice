@@ -1,0 +1,177 @@
+openapi: 3.0.3
+info:
+  title: usuarios-service API
+  version: 1.0.0
+  description: API de gestión de usuarios y autenticación
+servers:
+  - url: http://localhost:8081
+    description: Local
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: Iniciar sesión y obtener JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+  /api/v1/usuarios/propietario:
+    post:
+      tags: [Usuarios]
+      summary: Crear usuario propietario (solo ADMIN)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsuarioRequest'
+      responses:
+        '201':
+          description: Creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioResponse'
+  /api/v1/usuarios/empleado:
+    post:
+      tags: [Usuarios]
+      summary: Crear usuario empleado (solo OWNER)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsuarioEmpleadoRequest'
+      responses:
+        '201':
+          description: Creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioResponse'
+  /api/v1/usuarios/cliente:
+    post:
+      tags: [Usuarios]
+      summary: Crear usuario cliente
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsuarioRequest'
+      responses:
+        '201':
+          description: Creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioResponse'
+  /api/v1/usuarios/{id}:
+    get:
+      tags: [Usuarios]
+      summary: Obtener usuario por id
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsuarioResponse'
+        '404': { description: No encontrado }
+  /api/v1/usuarios/{id}/activo:
+    get:
+      tags: [Validaciones]
+      summary: Validar si el usuario está activo
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: boolean
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+    AuthResponse:
+      type: object
+      properties:
+        token: { type: string }
+        userId: { type: integer, format: int64 }
+        role: { type: string }
+        expiresIn: { type: integer }
+    UsuarioRequest:
+      type: object
+      required: [nombre, apellido, documento, celular, correo, clave]
+      properties:
+        nombre: { type: string }
+        apellido: { type: string }
+        documento: { type: string }
+        celular: { type: string, maxLength: 13 }
+        fechaNacimiento: { type: string, format: date }
+        correo: { type: string, format: email }
+        clave: { type: string, format: password }
+    UsuarioEmpleadoRequest:
+      allOf:
+        - $ref: '#/components/schemas/UsuarioRequest'
+      properties:
+        restauranteId:
+          type: integer
+          format: int64
+    UsuarioResponse:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        nombre: { type: string }
+        apellido: { type: string }
+        correo: { type: string }
+        rol: { type: string, enum: [ADMINISTRADOR, PROPIETARIO, EMPLEADO, CLIENTE] }
+        activo: { type: boolean }
+
+

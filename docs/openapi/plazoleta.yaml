@@ -1,0 +1,162 @@
+openapi: 3.0.3
+info:
+  title: plazoleta-service API
+  version: 1.0.0
+  description: API para restaurantes y platos
+servers:
+  - url: http://localhost:8082
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/restaurantes:
+    post:
+      tags: [Restaurantes]
+      summary: Crear restaurante (ADMIN)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestauranteRequest'
+      responses:
+        '201':
+          description: Creado
+    get:
+      tags: [Restaurantes]
+      summary: Listar restaurantes
+      parameters:
+        - in: query
+          name: page
+          schema: { type: integer, default: 0 }
+        - in: query
+          name: size
+          schema: { type: integer, default: 10 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RestauranteListadoResponse'
+  /api/v1/platos:
+    post:
+      tags: [Platos]
+      summary: Crear plato (OWNER)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlatoRequest'
+      responses:
+        '201': { description: Creado }
+  /api/v1/platos/{id}:
+    put:
+      tags: [Platos]
+      summary: Modificar plato (OWNER)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlatoUpdateRequest'
+      responses:
+        '200': { description: OK }
+  /api/v1/platos/{id}/estado:
+    patch:
+      tags: [Platos]
+      summary: Habilitar/Deshabilitar plato (OWNER)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64 }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                activo: { type: boolean }
+      responses:
+        '200': { description: OK }
+  /api/v1/platos/restaurante/{id}:
+    get:
+      tags: [Platos]
+      summary: Listar platos por restaurante
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64 }
+        - in: query
+          name: categoria
+          schema: { type: string, enum: [ENTRADA, PRINCIPAL, POSTRE, BEBIDA] }
+        - in: query
+          name: page
+          schema: { type: integer, default: 0 }
+        - in: query
+          name: size
+          schema: { type: integer, default: 10 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PlatoResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    RestauranteRequest:
+      type: object
+      required: [nombre, nit, direccion, telefono, urlLogo, propietarioId]
+      properties:
+        nombre: { type: string }
+        nit: { type: string }
+        direccion: { type: string }
+        telefono: { type: string, maxLength: 13 }
+        urlLogo: { type: string }
+        propietarioId: { type: integer, format: int64 }
+    RestauranteListadoResponse:
+      type: object
+      properties:
+        nombre: { type: string }
+        urlLogo: { type: string }
+    PlatoRequest:
+      type: object
+      required: [nombre, precio, descripcion, urlImagen, categoria, restauranteId]
+      properties:
+        nombre: { type: string }
+        precio: { type: number, format: double, minimum: 1 }
+        descripcion: { type: string }
+        urlImagen: { type: string }
+        categoria: { type: string, enum: [ENTRADA, PRINCIPAL, POSTRE, BEBIDA] }
+        restauranteId: { type: integer, format: int64 }
+    PlatoUpdateRequest:
+      type: object
+      properties:
+        precio: { type: number, format: double, minimum: 1 }
+        descripcion: { type: string }
+    PlatoResponse:
+      allOf:
+        - $ref: '#/components/schemas/PlatoRequest'
+      properties:
+        id: { type: integer, format: int64 }
+        activo: { type: boolean }
+
+

@@ -1,0 +1,41 @@
+openapi: 3.0.3
+info:
+  title: traceability-service API
+  version: 1.0.0
+servers:
+  - url: http://localhost:8084
+    description: traceability-service
+security:
+  - bearerAuth: []
+paths:
+  /api/v1/trazabilidad/pedido/{id}:
+    get:
+      tags: [Traceability]
+      summary: Get order traceability (CUSTOMER)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '200': { description: OK }
+  /api/v1/trazabilidad/eficiencia/restaurante/{id}:
+    get:
+      tags: [Traceability]
+      summary: Get efficiency by restaurant (OWNER)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer, format: int64 }
+      responses:
+        '200': { description: OK }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+
