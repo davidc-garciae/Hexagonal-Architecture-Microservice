@@ -125,12 +125,12 @@ spotless {
 
 def oasDir = "$rootDir/docs/openapi"
 
-tasks.register('openApiValidateUsuarios', ValidateTask) {
-	inputSpec.set("${oasDir}/usuarios.yaml")
+tasks.register('openApiValidateUsers', ValidateTask) {
+	inputSpec.set("${oasDir}/users.yaml")
 }
 
-tasks.register('openApiValidatePlazoleta', ValidateTask) {
-	inputSpec.set("${oasDir}/plazoleta.yaml")
+tasks.register('openApiValidateRestaurants', ValidateTask) {
+	inputSpec.set("${oasDir}/restaurants.yaml")
 }
 
 tasks.register('openApiValidateOrders', ValidateTask) {
@@ -141,14 +141,14 @@ tasks.register('openApiValidateTraceability', ValidateTask) {
 	inputSpec.set("${oasDir}/traceability.yaml")
 }
 
-tasks.register('openApiValidateMensajeria', ValidateTask) {
-	inputSpec.set("${oasDir}/mensajeria.yaml")
+tasks.register('openApiValidateMessaging', ValidateTask) {
+	inputSpec.set("${oasDir}/messaging.yaml")
 }
 
 tasks.register('openApiValidateAll') {
 	group = 'verification'
 	description = 'Valida todos los contratos OpenAPI en docs/openapi'
-	dependsOn 'openApiValidateUsuarios', 'openApiValidatePlazoleta', 'openApiValidateOrders', 'openApiValidateTraceability', 'openApiValidateMensajeria'
+	dependsOn 'openApiValidateUsers', 'openApiValidateRestaurants', 'openApiValidateOrders', 'openApiValidateTraceability', 'openApiValidateMessaging'
 }
 
 // ---- Auditoría de dependencias (OWASP) ----

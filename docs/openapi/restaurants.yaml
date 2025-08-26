@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: plazoleta-service API
+  title: restaurants-service API
   version: 1.0.0
   description: API para restaurantes y platos
 servers:

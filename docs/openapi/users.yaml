@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: usuarios-service API
+  title: users-service API
   version: 1.0.0
   description: API de gestión de usuarios y autenticación
 servers:

@@ -70,19 +70,19 @@ graph TB
     end
 
     subgraph "⚙️ Microservicios de Negocio"
-        MS_USER["👥 usuarios-service<br/>Puerto 8081"]
-        MS_RESTAURANT["🏪 plazoleta-service<br/>Puerto 8082"]
-        MS_ORDER["📋 pedidos-service<br/>Puerto 8083"]
-        MS_TRACE["📊 trazabilidad-service<br/>Puerto 8084"]
-        MS_MSG["📧 mensajeria-service<br/>Puerto 8085"]
+        MS_USER["👥 users-service<br/>Port 8081"]
+        MS_RESTAURANT["🏪 restaurants-service<br/>Port 8082"]
+        MS_ORDER["📋 orders-service<br/>Port 8083"]
+        MS_TRACE["📊 traceability-service<br/>Port 8084"]
+        MS_MSG["📧 messaging-service<br/>Port 8085"]
     end
 
     subgraph "🗄️ Bases de Datos PostgreSQL"
-        DB_USER[("👥 usuarios_db<br/>PostgreSQL")]
-        DB_REST[("🏪 plazoleta_db<br/>PostgreSQL")]
-        DB_ORDER[("📋 pedidos_db<br/>PostgreSQL")]
-        DB_TRACE[("📊 trazabilidad_db<br/>PostgreSQL")]
-        DB_MSG[("📧 mensajeria_db<br/>PostgreSQL")]
+        DB_USER[("👥 users_db<br/>PostgreSQL")]
+        DB_REST[("🏪 restaurants_db<br/>PostgreSQL")]
+        DB_ORDER[("📋 orders_db<br/>PostgreSQL")]
+        DB_TRACE[("📊 traceability_db<br/>PostgreSQL")]
+        DB_MSG[("📧 messaging_db<br/>PostgreSQL")]
     end
 
     subgraph "📨 Mensajería"
@@ -230,7 +230,7 @@ CANCELADO (solo desde PENDIENTE)
 
 ## 🔧 Microservicios
 
-### 1. 👥 usuarios-service
+### 1. 👥 users-service
 
 **Responsabilidad**: Gestión de usuarios, autenticación y autorización
 
@@ -246,7 +246,7 @@ CANCELADO (solo desde PENDIENTE)
 -   Validación de permisos
 -   Gestión de empleados por restaurante
 
-### 2. 🏪 plazoleta-service
+### 2. 🏪 restaurants-service
 
 **Responsabilidad**: Gestión de restaurantes y platos
 
@@ -263,7 +263,7 @@ CANCELADO (solo desde PENDIENTE)
 -   Listar platos por restaurante y categoría
 -   Validaciones de negocio
 
-### 3. 📋 pedidos-service
+### 3. 📋 orders-service
 
 **Responsabilidad**: Gestión del ciclo de vida de pedidos
 
@@ -281,7 +281,7 @@ CANCELADO (solo desde PENDIENTE)
 -   Generar PIN de seguridad
 -   Validar un pedido activo por cliente
 
-### 4. 📊 trazabilidad-service
+### 4. 📊 traceability-service
 
 **Responsabilidad**: Auditoría y trazabilidad de pedidos
 
@@ -297,7 +297,7 @@ CANCELADO (solo desde PENDIENTE)
 -   Generar métricas de tiempo
 -   Reportes para propietarios
 
-### 5. 📧 mensajeria-service
+### 5. 📧 messaging-service
 
 **Responsabilidad**: Notificaciones SMS y comunicaciones
 
@@ -333,7 +333,7 @@ CANCELADO (solo desde PENDIENTE)
 └── Documentación OpenAPI base
 ```
 
-### Fase 2: usuarios-service (Semana 1)
+### Fase 2: users-service (Semana 1)
 
 ```bash
 # HU-001: Crear cuenta Propietario (por Admin)
@@ -364,7 +364,7 @@ CANCELADO (solo desde PENDIENTE)
 └── Documentación OpenAPI
 ```
 
-### Fase 3: plazoleta-service (Semana 1)
+### Fase 3: restaurants-service (Semana 1)
 
 ```bash
 # HU-002: Crear restaurante (por Admin)
@@ -402,7 +402,7 @@ CANCELADO (solo desde PENDIENTE)
 └── Endpoint público
 ```
 
-### Fase 4: pedidos-service (Semana 2)
+### Fase 4: orders-service (Semana 2)
 
 ```bash
 # HU-011: Realizar pedido (Cliente)
@@ -421,7 +421,7 @@ CANCELADO (solo desde PENDIENTE)
 └── Tests con diferentes estados
 ```
 
-### Fase 5: pedidos-service - Gestión Estados (Semana 3)
+### Fase 5: orders-service - Gestión Estados (Semana 3)
 
 ```bash
 # HU-013: Asignarse a pedido (Empleado)
@@ -449,7 +449,7 @@ CANCELADO (solo desde PENDIENTE)
 └── Tests de restricciones
 ```
 
-### Fase 6: trazabilidad-service (Semana 3)
+### Fase 6: traceability-service (Semana 3)
 
 ```bash
 # HU-017: Consultar trazabilidad (Cliente)
@@ -467,7 +467,7 @@ CANCELADO (solo desde PENDIENTE)
 └── Tests de métricas
 ```
 
-### Fase 7: mensajeria-service (Semana 3)
+### Fase 7: messaging-service (Semana 3)
 
 ```bash
 # SMS cuando pedido está listo
@@ -1091,7 +1091,7 @@ public class HeaderAuthenticationFilter extends OncePerRequestFilter {
 }
 ```
 
-#### 7. Controller con Autorización (Infrastructure - ejemplo pedidos-service)
+#### 7. Controller con Autorización (Infrastructure - ejemplo orders-service)
 
 ```java
 // infrastructure/input/rest/PedidoController.java
@@ -1253,32 +1253,32 @@ spring:
         gateway:
             routes:
                 - id: auth-service
-                  uri: http://usuarios-service:8081
+                  uri: http://users-service:8081
                   predicates:
                       - Path=/api/v1/auth/**
 
-                - id: usuarios-service
-                  uri: http://usuarios-service:8081
+                - id: users-service
+                  uri: http://users-service:8081
                   predicates:
                       - Path=/api/v1/usuarios/**
 
-                - id: plazoleta-service
-                  uri: http://plazoleta-service:8082
+                - id: restaurants-service
+                  uri: http://restaurants-service:8082
                   predicates:
                       - Path=/api/v1/restaurantes/**, /api/v1/platos/**
 
-                - id: pedidos-service
-                  uri: http://pedidos-service:8083
+                - id: orders-service
+                  uri: http://orders-service:8083
                   predicates:
                       - Path=/api/v1/pedidos/**
 
-                - id: trazabilidad-service
-                  uri: http://trazabilidad-service:8084
+                - id: traceability-service
+                  uri: http://traceability-service:8084
                   predicates:
                       - Path=/api/v1/trazabilidad/**
 
-                - id: mensajeria-service
-                  uri: http://mensajeria-service:8085
+                - id: messaging-service
+                  uri: http://messaging-service:8085
                   predicates:
                       - Path=/api/v1/notificaciones/**
 
@@ -1665,7 +1665,7 @@ dependencies {
 
 ```java
 // infrastructure/out/feign/UsuarioServiceClient.java
-@FeignClient(name = "usuarios-service", url = "${microservices.usuarios.url:http://localhost:8081}")
+@FeignClient(name = "users-service", url = "${microservices.users.url:http://localhost:8081}")
 public interface UsuarioServiceClient {
 
     @GetMapping("/api/v1/usuarios/{id}")
@@ -1682,7 +1682,7 @@ public interface UsuarioServiceClient {
 }
 
 // infrastructure/out/feign/PlazaletaServiceClient.java
-@FeignClient(name = "plazoleta-service", url = "${microservices.plazoleta.url:http://localhost:8082}")
+@FeignClient(name = "restaurants-service", url = "${microservices.restaurants.url:http://localhost:8082}")
 public interface PlazaletaServiceClient {
 
     @GetMapping("/api/v1/platos/{id}")
@@ -1748,24 +1748,24 @@ feign:
                 connectTimeout: 5000
                 readTimeout: 10000
                 loggerLevel: basic
-            usuarios-service:
+            users-service:
                 connectTimeout: 3000
                 readTimeout: 5000
-            plazoleta-service:
+            restaurants-service:
                 connectTimeout: 3000
                 readTimeout: 5000
 
 # URLs de microservicios
 microservices:
-    usuarios:
+    users:
         url: http://localhost:8081
-    plazoleta:
+    restaurants:
         url: http://localhost:8082
-    pedidos:
+    orders:
         url: http://localhost:8083
-    trazabilidad:
+    traceability:
         url: http://localhost:8084
-    mensajeria:
+    messaging:
         url: http://localhost:8085
 ```
 
@@ -2065,7 +2065,7 @@ psql -U postgres -f scripts/init-databases.sql
 
 # Construir todos los servicios
 echo "🔨 Construyendo microservicios..."
-for service in usuarios-service plazoleta-service pedidos-service trazabilidad-service mensajeria-service; do
+for service in users-service restaurants-service orders-service traceability-service messaging-service; do
     echo "  📦 Construyendo $service..."
     cd $service && ./gradlew build -x test && cd ..
 done
@@ -2073,27 +2073,27 @@ done
 # Ejecutar servicios en segundo plano
 echo "🎬 Iniciando microservicios..."
 
-cd usuarios-service && nohup ./gradlew bootRun > logs/usuarios.log 2>&1 & echo $! > usuarios.pid && cd ..
+cd users-service && nohup ./gradlew bootRun > logs/users.log 2>&1 & echo $! > users.pid && cd ..
 sleep 10
 
-cd plazoleta-service && nohup ./gradlew bootRun > logs/plazoleta.log 2>&1 & echo $! > plazoleta.pid && cd ..
+cd restaurants-service && nohup ./gradlew bootRun > logs/restaurants.log 2>&1 & echo $! > restaurants.pid && cd ..
 sleep 10
 
-cd pedidos-service && nohup ./gradlew bootRun > logs/pedidos.log 2>&1 & echo $! > pedidos.pid && cd ..
+cd orders-service && nohup ./gradlew bootRun > logs/orders.log 2>&1 & echo $! > orders.pid && cd ..
 sleep 10
 
-cd trazabilidad-service && nohup ./gradlew bootRun > logs/trazabilidad.log 2>&1 & echo $! > trazabilidad.pid && cd ..
+cd traceability-service && nohup ./gradlew bootRun > logs/traceability.log 2>&1 & echo $! > traceability.pid && cd ..
 sleep 10
 
-cd mensajeria-service && nohup ./gradlew bootRun > logs/mensajeria.log 2>&1 & echo $! > mensajeria.pid && cd ..
+cd messaging-service && nohup ./gradlew bootRun > logs/messaging.log 2>&1 & echo $! > messaging.pid && cd ..
 
 echo "✅ Todos los microservicios iniciados!"
 echo "📚 Documentación disponible en:"
-echo "  - usuarios-service: http://localhost:8081/swagger-ui.html"
-echo "  - plazoleta-service: http://localhost:8082/swagger-ui.html"
-echo "  - pedidos-service: http://localhost:8083/swagger-ui.html"
-echo "  - trazabilidad-service: http://localhost:8084/swagger-ui.html"
-echo "  - mensajeria-service: http://localhost:8085/swagger-ui.html"
+echo "  - users-service: http://localhost:8081/swagger-ui.html"
+echo "  - restaurants-service: http://localhost:8082/swagger-ui.html"
+echo "  - orders-service: http://localhost:8083/swagger-ui.html"
+echo "  - traceability-service: http://localhost:8084/swagger-ui.html"
+echo "  - messaging-service: http://localhost:8085/swagger-ui.html"
 ```
 
 #### 3. Script de Parada
@@ -2151,20 +2151,20 @@ cd usuarios-service && ./gradlew bootRun
 #### Desarrollo con Múltiples Servicios
 
 ```bash
-# Terminal 1: usuarios-service
-cd usuarios-service && ./gradlew bootRun
+# Terminal 1: users-service
+cd users-service && ./gradlew bootRun
 
-# Terminal 2: plazoleta-service
-cd plazoleta-service && ./gradlew bootRun
+# Terminal 2: restaurants-service
+cd restaurants-service && ./gradlew bootRun
 
-# Terminal 3: pedidos-service
-cd pedidos-service && ./gradlew bootRun
+# Terminal 3: orders-service
+cd orders-service && ./gradlew bootRun
 
-# Terminal 4: trazabilidad-service
-cd trazabilidad-service && ./gradlew bootRun
+# Terminal 4: traceability-service
+cd traceability-service && ./gradlew bootRun
 
-# Terminal 5: mensajeria-service
-cd mensajeria-service && ./gradlew bootRun
+# Terminal 5: messaging-service
+cd messaging-service && ./gradlew bootRun
 ```
 
 ### Monitoreo y Observabilidad

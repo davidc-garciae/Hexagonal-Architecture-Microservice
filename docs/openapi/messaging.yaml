@@ -1,6 +1,6 @@
 openapi: 3.0.3
 info:
-  title: mensajeria-service API
+  title: messaging-service API
   version: 1.0.0
   description: API de notificaciones (SMS)
 servers:
